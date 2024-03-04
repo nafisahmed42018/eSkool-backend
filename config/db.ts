@@ -6,6 +6,7 @@ export const dbConnect = async (dbURL: string) => {
       console.log(`Database connected with ${data.connection.host}`)
     })
   } catch (error) {
+    // @ts-ignore
     console.log(error.message)
     setTimeout(dbConnect, 5000)
   }
