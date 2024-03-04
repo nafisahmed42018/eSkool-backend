@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import { errorHandler } from './middleware/error'
 
 export const app = express()
 
@@ -29,3 +30,5 @@ app.all('*', (req: Request, res: Response, next: NextFunction) => {
   err.statusCode = 404
   next(err)
 })
+
+app.use(errorHandler)
