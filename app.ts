@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import userRouter from './routes/user-route'
 import { errorHandler } from './middleware/error'
 
 export const app = express()
@@ -16,6 +17,7 @@ app.use(
 )
 
 // testing api
+app.use('/api/v1/auth', userRouter)
 app.get('/test', (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({
     success: true,

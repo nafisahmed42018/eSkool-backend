@@ -1,10 +1,12 @@
 import mongoose from 'mongoose'
 
-export const dbConnect = async (dbURL: string) => {
+export const dbConnect = async () => {
   try {
-    await mongoose.connect(dbURL).then((data: any) => {
-      console.log(`Database connected with ${data.connection.host}`)
-    })
+    await mongoose
+      .connect(process.env.DATABASE_URL as string)
+      .then((data: any) => {
+        console.log(`Database connected with ${data.connection.host}`)
+      })
   } catch (error) {
     // @ts-ignore
     console.log(error.message)
