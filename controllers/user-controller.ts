@@ -6,6 +6,7 @@ import ErrorHandler from '../utils/error-handler'
 import {
   generateToken,
   generateVerificationToken,
+  sendToken,
 } from '../utils/generate-token'
 import ejs from 'ejs'
 import path from 'path'
@@ -105,6 +106,61 @@ export const activateUser = asyncHandler(
         // @ts-ignore
         return next(new ErrorHandler(error.message, 400))
       }
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+
+interface ILoginRequest {
+  email: string
+  password: string
+}
+
+export const loginUser = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, password }: ILoginRequest = req.body
+      if (!email || !password) {
+        return next(new ErrorHandler('Please provide email and password', 401))
+      }
+      const user = await UserModel.findOne({ email }).select('+password')
+
+      if (!user) {
+        return next(new ErrorHandler('Invalid Credentials', 401))
+      }
+
+      const isPasswordMatched = await user.comparePassword(password)
+      if (!isPasswordMatched) {
+        return next(new ErrorHandler('Invalid Credentials', 401))
+      }
+      if (!user.isVerified) {
+        return next(new ErrorHandler('Please verify your account', 401))
+      }
+      const userWP = await UserModel.findOne({ email })
+      if (!userWP) {
+        return next(new ErrorHandler('User not found', 404))
+      }
+
+      sendToken(userWP, 200, res)
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+
+export const logoutUser = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.cookie('jwt', '', { maxAge: 1 })
+      res.cookie('access_token', '', { maxAge: 1 })
+      res.cookie('refresh_token', '', { maxAge: 1 })
+      res.status(200).json({
+        success: true,
+        message: 'Logged out successfully',
+      })
     } catch (error) {
       // @ts-ignore
       return next(new ErrorHandler(error.message, 400))

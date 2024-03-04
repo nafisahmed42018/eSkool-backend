@@ -1,6 +1,7 @@
 import mongoose, { Document, Model, Schema } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import { NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
 
 const emailRegexPattern: RegExp = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
@@ -16,6 +17,8 @@ export interface IUser extends Document {
   isVerified: boolean
   courses: Array<{ courseId: string }>
   comparePassword: (password: string) => Promise<boolean>
+  signAccessToken: () => string
+  signRefreshToken: () => string
 }
 
 const userSchema: Schema<IUser> = new mongoose.Schema(
@@ -46,6 +49,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
   { timestamps: true },
 )
 
+// Hash password before saving to database. This is a pre-save hook. It is called before the document is saved. It is used to hash the password before saving it to the database. The hash is generated using the bcrypt library. The salt is generated using the bcrypt library. The salt is 10. The password is hashed using the
 userSchema.pre<IUser>('save', async function (next) {
   if (!this.isModified('password')) {
     next()
@@ -53,6 +57,19 @@ userSchema.pre<IUser>('save', async function (next) {
   this.password = await bcrypt.hash(this.password, 10)
   next()
 })
+
+//
+userSchema.methods.signAccessToken = function () {
+  return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || '', {
+    // expiresIn: process.env.JWT_EXPIRY,
+  })
+}
+//
+userSchema.methods.signRefreshToken = function () {
+  return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN || '', {
+    // expiresIn: process.env.JWT_EXPIRY,
+  })
+}
 
 userSchema.methods.comparePassword = async function (
   password: string,
