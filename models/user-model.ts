@@ -75,7 +75,11 @@ userSchema.methods.comparePassword = async function (
 ): Promise<boolean> {
   return await bcrypt.compare(password, this.password)
 }
-
+userSchema.methods.toJSON = function () {
+  const userObject = this.toObject()
+  delete userObject.password
+  return userObject
+}
 const UserModel: Model<IUser> = mongoose.model('User', userSchema)
 
 export default UserModel

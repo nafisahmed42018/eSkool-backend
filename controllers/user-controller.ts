@@ -86,7 +86,7 @@ export const activateUser = asyncHandler(
         userId: string
         verificationCode: string
       }
-      console.log(newUser)
+      // console.log(newUser)
 
       if (newUser.verificationCode !== verificationCode) {
         return next(new ErrorHandler('Invalid Activation Code', 400))
@@ -205,6 +205,7 @@ export const updateAccessToken = asyncHandler(
           expiresIn: '7d',
         },
       )
+      req.user = user
       res.cookie('access_token', accessToken, accessTokenOptions)
       res.cookie('refresh_token', refreshToken, refreshTokenOptions)
       res.status(200).json({
@@ -251,6 +252,35 @@ export const getUserInfo = asyncHandler(
     try {
       const userId = req.user?._id
       getUserById(userId, res)
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+export const updateUserInfo = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, password } = req.body
+      const userId = req.user?._id
+      const user = await UserModel.findById(userId)
+      console.log()
+
+      if (user && password) {
+        user.password = password
+      }
+      if (user && name) {
+        user.name = name
+      }
+
+      await user?.save()
+      const sanitizedUser = user?.toJSON()
+      await redis.set(userId, JSON.stringify(sanitizedUser))
+
+      res.status(201).json({
+        success: true,
+        user: sanitizedUser,
+      })
     } catch (error) {
       // @ts-ignore
       return next(new ErrorHandler(error.message, 400))
