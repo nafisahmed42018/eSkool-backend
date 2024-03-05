@@ -1,16 +1,19 @@
-import jwt from 'jsonwebtoken'
+import jwt, { JwtPayload } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 import asyncHandler from '../middleware/async-handler'
 import UserModel, { IUser } from '../models/user-model'
 import ErrorHandler from '../utils/error-handler'
 import {
   generateToken,
-  generateVerificationToken,
+  generateVerificationCodeAndToken,
   sendToken,
 } from '../utils/generate-token'
 import ejs from 'ejs'
 import path from 'path'
 import sendVerificationCodeMail from '../config/send-mail'
+import { redis } from '../config/redis'
+import { accessTokenOptions, refreshTokenOptions } from '../utils/token-config'
+import { getUserById } from '../services/user-service'
 
 interface IRegistrationBody {
   name: string
@@ -37,7 +40,7 @@ export const registerUser = asyncHandler(
 
       //   Generate verification code and token
       const userId = user._id
-      const verificationToken = generateVerificationToken(userId, email)
+      const verificationToken = generateVerificationCodeAndToken(userId, email)
       const { verificationCode, token } = verificationToken
 
       //   Mail the verification code
@@ -157,10 +160,97 @@ export const logoutUser = asyncHandler(
       res.cookie('jwt', '', { maxAge: 1 })
       res.cookie('access_token', '', { maxAge: 1 })
       res.cookie('refresh_token', '', { maxAge: 1 })
+      const userId = req.user?._id || ''
+      redis.del(userId)
       res.status(200).json({
         success: true,
         message: 'Logged out successfully',
       })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+export const updateAccessToken = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refresh_token = req.cookies.refresh_token as string
+      const decoded = jwt.verify(
+        refresh_token,
+        process.env.REFRESH_TOKEN as string,
+      ) as JwtPayload
+      console.log(decoded)
+      const message = 'Could not refresh token'
+      if (!decoded) {
+        return next(new ErrorHandler(message, 400))
+      }
+      const session = await redis.get(decoded.id as string)
+      if (!session) {
+        return next(new ErrorHandler(message, 400))
+      }
+      const user = JSON.parse(session)
+
+      const accessToken = jwt.sign(
+        { id: user._id },
+        process.env.ACCESS_TOKEN as string,
+        {
+          expiresIn: '5m',
+        },
+      )
+      const refreshToken = jwt.sign(
+        { id: user._id },
+        process.env.REFRESH_TOKEN as string,
+        {
+          expiresIn: '7d',
+        },
+      )
+      res.cookie('access_token', accessToken, accessTokenOptions)
+      res.cookie('refresh_token', refreshToken, refreshTokenOptions)
+      res.status(200).json({
+        success: true,
+        accessToken,
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+
+interface ISocialAuthBody {
+  email: string
+  name: string
+  avatar: string
+}
+// Social Auth
+export const socialAuth = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, name, avatar }: ISocialAuthBody = req.body
+      const user = await UserModel.findOne({ email })
+      if (!user) {
+        const newUser = await UserModel.create({
+          email,
+          name,
+          avatar,
+        })
+        sendToken(newUser, 201, res)
+      } else {
+        sendToken(user, 200, res)
+      }
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+
+export const getUserInfo = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?._id
+      getUserById(userId, res)
     } catch (error) {
       // @ts-ignore
       return next(new ErrorHandler(error.message, 400))
