@@ -2,7 +2,9 @@ import express from 'express'
 
 import { authorizedRoles, isAuthenticated } from '../middleware/auth-handler'
 import {
-
+  getAllcourses,
+  getCourseByUser,
+  getSingleCourse,
   uploadCourse,
 } from '../controllers/course-controller'
 
@@ -20,6 +22,8 @@ router.put(
   authorizedRoles('Admin'),
   uploadCourse,
 )
-
+router.get('/:id', getSingleCourse)
+router.get('/', getAllcourses)
+router.get('/get-course-content/:id', isAuthenticated, getCourseByUser)
 
 export default router

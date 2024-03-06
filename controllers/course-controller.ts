@@ -62,6 +62,85 @@ export const editCourse = asyncHandler(
     }
   },
 )
+export const getSingleCourse = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const courseId = req.params.id
+      const cacheExist = await redis.get(courseId)
+      if (cacheExist) {
+        const course = JSON.parse(cacheExist)
+        res.status(200).json({
+          success: true,
+          data: course,
+        })
+      } else {
+        const course = await CourseModel.findById(courseId).select(
+          '-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links',
+        )
+        await redis.set(courseId, JSON.stringify(course))
+        res.status(200).json({
+          success: true,
+          data: course,
+        })
+      }
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
+export const getAllcourses = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const cacheExist = await redis.get('courses')
+      if (cacheExist) {
+        const courses = JSON.parse(cacheExist)
+        res.status(200).json({
+          success: true,
+          data: courses,
+        })
+      } else {
+        const courses = await CourseModel.find().select(
+          '-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links',
+        )
+        redis.set('courses', JSON.stringify(courses))
+        res.status(200).json({
+          success: true,
+          data: courses,
+        })
+      }
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
+export const getCourseByUser = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userCourseList = req.user?.courses
+      const courseId = req.params.id
+      const courseExist = userCourseList?.find(
+        (course: any) => course._id.toString() === courseId,
+      )
+      if (!courseExist) {
+        return next(
+          new ErrorHandler('You are not eligible to access this course', 500),
+        )
+      }
+      const course = await CourseModel.findById(courseId)
+      const content = course?.courseData
+      res.status(200).json({
+        success: true,
+        data: content,
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
+
 
 export const controller = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
