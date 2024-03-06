@@ -17,7 +17,7 @@ app.use(
 )
 
 // testing api
-app.use('/api/v1/auth', userRouter)
+app.use('/api/v1/auth',userRouter)
 app.get('/test', (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({
     success: true,

@@ -261,25 +261,22 @@ export const getUserInfo = asyncHandler(
 export const updateUserInfo = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { name, password } = req.body
+      const { name } = req.body
       const userId = req.user?._id
       const user = await UserModel.findById(userId)
       console.log()
 
-      if (user && password) {
-        user.password = password
-      }
       if (user && name) {
         user.name = name
       }
 
       await user?.save()
-      const sanitizedUser = user?.toJSON()
-      await redis.set(userId, JSON.stringify(sanitizedUser))
+
+      await redis.set(userId, JSON.stringify(user))
 
       res.status(201).json({
         success: true,
-        user: sanitizedUser,
+        user: user,
       })
     } catch (error) {
       // @ts-ignore
@@ -287,3 +284,42 @@ export const updateUserInfo = asyncHandler(
     }
   },
 )
+
+export const changePassword = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { oldPassword, newPassword } = req.body
+      if (!oldPassword || !newPassword) {
+        return next(
+          new ErrorHandler('Please provide old and new password', 400),
+        )
+      }
+      const userId = req.user?._id
+      const user = await UserModel.findById(userId).select('+password')
+      if (!user) {
+        return next(new ErrorHandler('User not found', 404))
+      }
+      const isPasswordMatch = await user.comparePassword(oldPassword)
+      if (!isPasswordMatch) {
+        return next(new ErrorHandler('Invalid old password', 400))
+      }
+      if (await user.comparePassword(newPassword)) {
+        return next(
+          new ErrorHandler('Old and new password cannot be same', 400),
+        )
+      }
+      user.password = newPassword
+      await user.save()
+      await redis.set(userId, JSON.stringify(user))
+      res.status(201).json({
+        success: true,
+        message: 'Password changed successfully',
+        user: user,
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+
