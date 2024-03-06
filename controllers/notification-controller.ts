@@ -1,13 +1,51 @@
 import { Request, Response, NextFunction } from 'express'
 import asyncHandler from '../middleware/async-handler'
-import UserModel, { IUser } from '../models/user-model'
 import ErrorHandler from '../utils/error-handler'
-import cloudinary from 'cloudinary'
-import { createCourse } from '../services/course-service'
-import CourseModel from '../models/course-model'
 import { redis } from '../config/redis'
 import mongoose from 'mongoose'
+import NotificationModel from '../models/notification-model'
 
+export const getNotifications = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const notifications = await NotificationModel.find().sort({
+        createdAt: -1,
+      })
+      res.status(200).json({
+        success: true,
+        data: notifications,
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
+export const updateNotificationStatus = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const notification = await NotificationModel.findById(req.params.id)
+      if (!notification) {
+        return next(new ErrorHandler('Notification not found', 404))
+      } else {
+        notification.status
+          ? (notification.status = 'read')
+          : notification.status
+      }
+      await notification.save()
+      const notifications = await NotificationModel.find().sort({
+        createdAt: -1,
+      })
+      res.status(200).json({
+        success: true,
+        data: notifications,
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
 export const controller = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {

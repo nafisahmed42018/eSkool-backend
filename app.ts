@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import userRouter from './routes/user-route'
 import courseRouter from './routes/course-route'
 import orderRouter from './routes/order-route'
+import notificationRouter from './routes/notification-route'
 import { errorHandler } from './middleware/error'
 
 export const app = express()
@@ -22,6 +23,7 @@ app.use(
 app.use('/api/v1/auth', userRouter)
 app.use('/api/v1/course', courseRouter)
 app.use('/api/v1/order', orderRouter)
+app.use('/api/v1/notification', notificationRouter)
 app.get('/test', (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({
     success: true,
