@@ -3,9 +3,12 @@ import express from 'express'
 import { authorizedRoles, isAuthenticated } from '../middleware/auth-handler'
 import {
   addQuestion,
+  addReview,
   getAllcourses,
   getCourseByUser,
   getSingleCourse,
+  replyQuestion,
+  replyToReview,
   uploadCourse,
 } from '../controllers/course-controller'
 
@@ -26,6 +29,14 @@ router.put(
 router.get('/:id', getSingleCourse)
 router.get('/', getAllcourses)
 router.get('/get-course-content/:id', isAuthenticated, getCourseByUser)
-router.get('/add-question', isAuthenticated, addQuestion)
+router.put('/add-question', isAuthenticated, addQuestion)
+router.put('/reply/:id', isAuthenticated, replyQuestion)
+router.put('/add-review/:id', isAuthenticated, addReview)
+router.put(
+  '/review-reply',
+  isAuthenticated,
+  authorizedRoles('Admin'),
+  replyToReview,
+)
 
 export default router

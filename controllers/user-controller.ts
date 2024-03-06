@@ -265,7 +265,7 @@ export const updateUserInfo = asyncHandler(
       const { name } = req.body
       const userId = req.user?._id
       const user = await UserModel.findById(userId)
-      console.log()
+      // console.log()
 
       if (user && name) {
         user.name = name
