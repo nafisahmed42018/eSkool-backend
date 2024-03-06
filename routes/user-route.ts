@@ -8,6 +8,7 @@ import {
   registerUser,
   socialAuth,
   updateAccessToken,
+  updateProfilePicture,
   updateUserInfo,
 } from '../controllers/user-controller'
 import { authorizedRoles, isAuthenticated } from '../middleware/auth-handler'
@@ -28,5 +29,6 @@ router.get('/me', isAuthenticated, getUserInfo)
 router.post('/social-auth', socialAuth)
 router.put('/update-user', isAuthenticated, updateUserInfo)
 router.put('/update-password', isAuthenticated, changePassword)
+router.put('/update-user-avatar', isAuthenticated, updateProfilePicture)
 
 export default router

@@ -14,6 +14,7 @@ import sendVerificationCodeMail from '../config/send-mail'
 import { redis } from '../config/redis'
 import { accessTokenOptions, refreshTokenOptions } from '../utils/token-config'
 import { getUserById } from '../services/user-service'
+import cloudinary from 'cloudinary'
 
 interface IRegistrationBody {
   name: string
@@ -323,3 +324,50 @@ export const changePassword = asyncHandler(
   },
 )
 
+interface IUpdateProfilePicture {
+  avatar: string
+}
+
+export const updateProfilePicture = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { avatar }: IUpdateProfilePicture = req.body
+      const userId = req.user?._id
+      const user = await UserModel.findById(userId)
+      if (avatar && user) {
+        if (user?.avatar?.public_id) {
+          await cloudinary.v2.uploader.destroy(user?.avatar?.public_id)
+          const cloudUpload = await cloudinary.v2.uploader.upload(avatar, {
+            folder: 'lms/avatars',
+            width: 150,
+            height: 150,
+          })
+          user.avatar = {
+            public_id: cloudUpload.public_id,
+            url: cloudUpload.secure_url,
+          }
+        } else {
+          const cloudUpload = await cloudinary.v2.uploader.upload(avatar, {
+            folder: 'lms/avatars',
+            width: 150,
+            height: 150,
+          })
+          user.avatar = {
+            public_id: cloudUpload.public_id,
+            url: cloudUpload.secure_url,
+          }
+        }
+        await user.save()
+        await redis.set(userId, JSON.stringify(user))
+        res.status(200).json({
+          success: true,
+          message: 'Password changed successfully',
+          user: user,
+        })
+      }
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
