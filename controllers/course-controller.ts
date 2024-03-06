@@ -141,7 +141,100 @@ export const getCourseByUser = asyncHandler(
   },
 )
 
+interface IAddQuestionData {
+  question: string
+  courseId: string
+  contentId: string
+}
+export const addQuestion = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { question, courseId, contentId }: IAddQuestionData = req.body
+      const course = await CourseModel.findById(courseId)
+      if (!mongoose.Types.ObjectId.isValid(contentId)) {
+        return next(new ErrorHandler('Invalid content id', 400))
+      }
+      const courseContent = course?.courseData?.find((content: any) =>
+        content._id.equals(contentId),
+      )
+      if (!courseContent) {
+        return next(new ErrorHandler('Invalid content id', 400))
+      }
+      const newQuestion: any = {
+        user: req.user,
+        comment: question,
+        commentReplies: [],
+      }
 
+      courseContent.questions.push(newQuestion)
+
+      await course?.save()
+      res.status(200).json({
+        success: true,
+        data: course,
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
+interface IAddQuestionData {
+  questionId: string
+  courseId: string
+  contentId: string
+  reply: string
+}
+export const replyQuestion = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        questionId,
+        courseId,
+        contentId,
+        reply,
+      }: IAddQuestionData = req.body
+      const course = await CourseModel.findById(courseId)
+      if (!mongoose.Types.ObjectId.isValid(contentId)) {
+        return next(new ErrorHandler('Invalid content id', 400))
+      }
+      const courseContent = course?.courseData?.find((content: any) =>
+        content._id.equals(contentId),
+      )
+      if (!courseContent) {
+        return next(new ErrorHandler('Invalid content id', 400))
+      }
+      const question = courseContent.questions.find((question: any) =>
+        question._id.equals(questionId),
+      )
+      if (!question) {
+        return next(new ErrorHandler('Invalid question id', 400))
+      }
+      const newReply: any = {
+        user: req.user,
+        comment: reply,
+      }
+      question.commentReplies?.push(newReply)
+      await course?.save()
+
+      if (req.user?._id === question.user._id) {
+        // send notification to user
+      } else {
+        const data = {
+          name: question.user.name,
+          title: courseContent.title,
+        }
+      }
+      res.status(200).json({
+        success: true,
+        data: '',
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
 export const controller = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
