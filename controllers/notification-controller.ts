@@ -7,3 +7,17 @@ import { createCourse } from '../services/course-service'
 import CourseModel from '../models/course-model'
 import { redis } from '../config/redis'
 import mongoose from 'mongoose'
+
+export const controller = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.status(200).json({
+        success: true,
+        data: '',
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)

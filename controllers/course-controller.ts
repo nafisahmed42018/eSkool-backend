@@ -330,16 +330,4 @@ export const replyToReview = asyncHandler(
     }
   },
 )
-export const controller = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      res.status(200).json({
-        success: true,
-        data: '',
-      })
-    } catch (error) {
-      // @ts-ignore
-      return next(new ErrorHandler(error.message, 500))
-    }
-  },
-)
+
