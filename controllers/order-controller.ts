@@ -4,7 +4,7 @@ import ErrorHandler from '../utils/error-handler'
 import OrderModel, { IOrder } from '../models/order-model'
 import UserModel from '../models/user-model'
 import CourseModel from '../models/course-model'
-import { newOrder } from '../services/order-service'
+import { getAllOrdersService, newOrder } from '../services/order-service'
 import NotificationModel from '../models/notification-model'
 
 export const createOrder = asyncHandler(
@@ -59,6 +59,18 @@ export const createOrder = asyncHandler(
       course.purchased ? (course.purchased += 1) : course.purchased
 
       await course?.save()
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 500))
+    }
+  },
+)
+
+// get All orders --- only for admin
+export const getAllOrders = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllOrdersService(res)
     } catch (error) {
       // @ts-ignore
       return next(new ErrorHandler(error.message, 500))

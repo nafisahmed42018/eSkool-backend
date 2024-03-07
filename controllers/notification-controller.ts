@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import asyncHandler from '../middleware/async-handler'
 import ErrorHandler from '../utils/error-handler'
-import { redis } from '../config/redis'
-import mongoose from 'mongoose'
 import NotificationModel from '../models/notification-model'
-
+import cron from 'node-cron'
 export const getNotifications = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -46,6 +44,15 @@ export const updateNotificationStatus = asyncHandler(
     }
   },
 )
+// delete notification --- only admin
+cron.schedule('0 0 0 * * *', async () => {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  await NotificationModel.deleteMany({
+    status: 'read',
+    createdAt: { $lt: thirtyDaysAgo },
+  })
+//   console.log('Deleted read notifications')
+})
 export const controller = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {

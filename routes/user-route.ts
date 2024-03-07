@@ -2,6 +2,7 @@ import express from 'express'
 import {
   activateUser,
   changePassword,
+  getAllUsers,
   getUserInfo,
   loginUser,
   logoutUser,
@@ -30,5 +31,6 @@ router.post('/social-auth', socialAuth)
 router.put('/update-user', isAuthenticated, updateUserInfo)
 router.put('/update-password', isAuthenticated, changePassword)
 router.put('/update-user-avatar', isAuthenticated, updateProfilePicture)
+router.get('/get-users', isAuthenticated, authorizedRoles('Admin'), getAllUsers)
 
 export default router

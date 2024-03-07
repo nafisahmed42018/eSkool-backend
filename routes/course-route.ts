@@ -11,6 +11,7 @@ import {
   replyToReview,
   uploadCourse,
 } from '../controllers/course-controller'
+import { getAdminAllCourses } from '../controllers/course-controller'
 
 const router = express.Router()
 
@@ -37,6 +38,12 @@ router.put(
   isAuthenticated,
   authorizedRoles('Admin'),
   replyToReview,
+)
+router.get(
+  '/get-courses',
+  isAuthenticated,
+  authorizedRoles('Admin'),
+  getAdminAllCourses,
 )
 
 export default router

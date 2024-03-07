@@ -13,7 +13,7 @@ import path from 'path'
 import sendVerificationCodeMail from '../config/send-mail'
 import { redis } from '../config/redis'
 import { accessTokenOptions, refreshTokenOptions } from '../utils/token-config'
-import { getUserById } from '../services/user-service'
+import { getAllUsersService, getUserById } from '../services/user-service'
 import cloudinary from 'cloudinary'
 
 interface IRegistrationBody {
@@ -371,3 +371,14 @@ export const updateProfilePicture = asyncHandler(
     }
   },
 )
+
+// get all users --- only for admin
+export const getAllUsers = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllUsersService(res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);

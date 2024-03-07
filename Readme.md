@@ -6,3 +6,5 @@ npm i -D ts-node-dev @types/bcryptjs @types/cookie-parser @types/cors @types/jso
 npm i nodemailer ejs
 
 npm i -D @types/ejs @types/nodemailer
+
+npm i cloudinary node-cron
