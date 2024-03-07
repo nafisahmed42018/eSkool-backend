@@ -13,7 +13,11 @@ import path from 'path'
 import sendVerificationCodeMail from '../config/send-mail'
 import { redis } from '../config/redis'
 import { accessTokenOptions, refreshTokenOptions } from '../utils/token-config'
-import { getAllUsersService, getUserById } from '../services/user-service'
+import {
+  getAllUsersService,
+  getUserById,
+  updateUserRoleService,
+} from '../services/user-service'
 import cloudinary from 'cloudinary'
 
 interface IRegistrationBody {
@@ -376,9 +380,59 @@ export const updateProfilePicture = asyncHandler(
 export const getAllUsers = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      getAllUsersService(res);
-    } catch (error: any) {
-      return next(new ErrorHandler(error.message, 400));
+      getAllUsersService(res)
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
     }
-  }
-);
+  },
+)
+
+// update user role --- only for admin
+export const updateUserRole = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, role } = req.body
+      const isUserExist = await UserModel.findOne({ email })
+      if (isUserExist) {
+        const id = isUserExist._id
+        updateUserRoleService(res, id, role)
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'User not found',
+        })
+      }
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)
+
+// Delete user --- only for admin
+export const deleteUser = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params
+
+      const user = await UserModel.findById(id)
+
+      if (!user) {
+        return next(new ErrorHandler('User not found', 404))
+      }
+
+      await user.deleteOne({ id })
+
+      await redis.del(id)
+
+      res.status(200).json({
+        success: true,
+        message: 'User deleted successfully',
+      })
+    } catch (error) {
+      // @ts-ignore
+      return next(new ErrorHandler(error.message, 400))
+    }
+  },
+)

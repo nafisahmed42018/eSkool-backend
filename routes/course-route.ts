@@ -4,6 +4,7 @@ import { authorizedRoles, isAuthenticated } from '../middleware/auth-handler'
 import {
   addQuestion,
   addReview,
+  deleteCourse,
   getAllcourses,
   getCourseByUser,
   getSingleCourse,
@@ -44,6 +45,12 @@ router.get(
   isAuthenticated,
   authorizedRoles('Admin'),
   getAdminAllCourses,
+)
+router.delete(
+  '/delete-course/:id',
+  isAuthenticated,
+  authorizedRoles('Admin'),
+  deleteCourse,
 )
 
 export default router
