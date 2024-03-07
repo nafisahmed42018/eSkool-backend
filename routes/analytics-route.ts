@@ -9,21 +9,21 @@ import {
 const router = express.Router()
 
 router.get(
-  '/get-users-analytics',
+  '/get-users',
   isAuthenticated,
   authorizedRoles('Admin'),
   getUsersAnalytics,
 )
 
 router.get(
-  '/get-orders-analytics',
+  '/get-orders',
   isAuthenticated,
   authorizedRoles('Admin'),
   getOrderAnalytics,
 )
 
 router.get(
-  '/get-courses-analytics',
+  '/get-courses',
   isAuthenticated,
   authorizedRoles('Admin'),
   getCoursesAnalytics,

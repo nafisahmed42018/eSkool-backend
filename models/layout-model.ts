@@ -16,9 +16,9 @@ export interface IBannerImage extends Document {
 
 interface ILayout extends Document {
   type: string
-  faq: IFaqItem[]
-  categories: ICategory[]
-  banner: {
+  faq?: IFaqItem[]
+  categories?: ICategory[]
+  banner?: {
     image: IBannerImage
     title: string
     subTitle: string

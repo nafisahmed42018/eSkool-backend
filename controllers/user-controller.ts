@@ -91,7 +91,7 @@ export const activateUser = asyncHandler(
         userId: string
         verificationCode: string
       }
-      // console.log(newUser)
+      console.log(newUser)
 
       if (newUser.verificationCode !== verificationCode) {
         return next(new ErrorHandler('Invalid Activation Code', 400))
@@ -104,7 +104,6 @@ export const activateUser = asyncHandler(
       user.isVerified = true
       try {
         await user.save()
-        generateToken(res, user._id)
         res.status(201).json({
           _id: user._id,
           name: user.name,
