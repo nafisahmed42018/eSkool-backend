@@ -91,7 +91,7 @@ export const activateUser = asyncHandler(
         userId: string
         verificationCode: string
       }
-      console.log(newUser)
+      // console.log(newUser)
 
       if (newUser.verificationCode !== verificationCode) {
         return next(new ErrorHandler('Invalid Activation Code', 400))
@@ -184,7 +184,7 @@ export const updateAccessToken = asyncHandler(
         refresh_token,
         process.env.REFRESH_TOKEN as string,
       ) as JwtPayload
-      console.log(decoded)
+      // console.log(decoded)
       const message = 'Could not refresh token'
       if (!decoded) {
         return next(new ErrorHandler(message, 400))
@@ -234,15 +234,17 @@ export const socialAuth = asyncHandler(
     try {
       const { email, name, avatar }: ISocialAuthBody = req.body
       const user = await UserModel.findOne({ email })
-      if (!user) {
+      if (user) {
+        user.avatar.url = avatar
+        await user?.save()
+        sendToken(user, 200, res)
+      } else {
         const newUser = await UserModel.create({
           email,
           name,
           avatar,
         })
         sendToken(newUser, 201, res)
-      } else {
-        sendToken(user, 200, res)
       }
     } catch (error) {
       // @ts-ignore
